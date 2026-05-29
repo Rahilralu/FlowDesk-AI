@@ -28,10 +28,6 @@ export const authenticate_token = (req,res,next) => {
             req.user = decoded
             next()
         })
-
-
-
-
     }
     catch (err) {
         res.status(500).json({ success: false, message: "Server Error"});    

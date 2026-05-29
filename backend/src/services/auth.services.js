@@ -1,0 +1,82 @@
+import prisma from '../config/psql.js';
+import bcrypt from "bcryptjs";
+import { generateAccessToken,generateRefreshToken } from '../utils/tokens.js'
+import jwt from 'jsonwebtoken';
+
+export const loginUser = async ({ email,password }) => {
+    const user = await prisma.User.findUnique({ where : {email}});
+    if(!user) throw new Error('Invalid Credentials');
+
+    const isValid = await bcrypt.compare(password,user.password);
+    if(!isValid) throw new Error('Invalid Credentials');
+
+    const access_token = generateAccessToken(email);
+    const refresh_token = generateRefreshToken(email);
+
+    const hashed = await bcrypt.hash(refresh_token,Number(process.env.SALT));
+
+    await prisma.refreshToken.create({
+        data:{
+            token:hashed,
+            userId:user.id,
+            expiresAt:new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        }
+    })
+    
+    return { access_token,refresh_token }
+}
+
+export const refreshAccessToken = async (token) => {
+    const payload = jwt.verify(token,process.env.REFRESH_TOKEN_SECRET);
+
+    const tokens = await prisma.refreshToken.findMany({
+        where : {userId : payload.id}
+    })
+
+    const matched = await Promise.all(
+        tokens.map(async (t) => {
+            const match = await bcrypt.compare(token,t.token);
+            return match ? t : null;
+        })
+    ).then((results) => results.find(Boolean));
+
+    if(!matched) throw new Error("Invalid refresh token");
+    if(matched.expiresAt < new Date()) throw new Error("Refresh token expired");
+
+    await prisma.refreshToken.deleteMany({ where : { id: matched.id}});
+
+    const newAccessToken = generateAccessToken({ email: payload.email});
+    const newRefreshToken = generateRefreshToken({ email:payload.email });
+    const hashed = await bcrypt.hash(newRefreshToken, Number(process.env.SALT));
+
+    await prisma.refreshToken.create({
+        data: {
+            token: hashed,
+            userId:payload.id,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        }
+    });
+
+    return { accessToken : newAccessToken , refreshToken : newRefreshToken }
+}
+
+export const logoutUser = async (token) => {
+    const payload = jwt.verify(token,process.env.REFRESH_TOKEN_SECRET);
+
+    const tokens = await prisma.refreshToken.findMany({
+        where: { userId : payload.id }
+    });
+
+    const matched = await Promise.all(
+        tokens.map(async (t) =>{
+            const match = await bcrypt.compare(token,t.token);
+            return match ? t : null
+        })
+    ).then((results) => results.find(Boolean));
+    
+    if(matched){
+        await prisma.refreshToken.deleteMany({
+            where: { id : matched.id }
+        })
+    }
+}
