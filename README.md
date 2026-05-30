@@ -1,109 +1,79 @@
 # FlowDesk AI
 
-A small internal operations tool for capturing customer requests from multiple channels, classifying them with AI or a mock AI module, assigning priority, routing them into a workflow, and tracking status through an admin dashboard.
+FlowDesk AI is an internal operations tool for capturing customer requests from multiple channels, classifying them with AI, and tracking them through a live admin workflow.
 
-## Project idea
+## What is implemented
 
-FlowDesk AI is designed to help support, sales, or automation teams manage customer messages from:
-- Website forms
-- WhatsApp
-- Email
-- API/webhook simulations
+- Multi-channel ingestion from:
+  - Telegram webhook
+  - WhatsApp webhook
+  - web/API request creation
+- Request storage in PostgreSQL via Prisma
+- Background classification queue powered by BullMQ and Redis
+- AI classification worker with provider integration
+- JWT auth with access + refresh token flow
+- Refresh cookie handling with secure cross-origin support
+- Protected admin routes with role-based access control
+- Real-time updates via Socket.IO
+- Audit log endpoint and event streaming
+- Frontend dashboard with login, request detail, and audit log pages
 
-Each request should be:
-1. Saved immediately and marked as `NEW` or `QUEUED`
-2. Processed by a background AI classification worker
-3. Stored with a separate AI classification snapshot
-4. Shown in a live admin dashboard with realtime status updates
-5. Updated by an admin or agent with status changes and internal notes
+## Backend endpoints
 
-## Core workflow
+### Auth
+- `POST /api/auth/login` — login and set refresh cookie
+- `POST /api/auth/refresh` — refresh access token using HTTP-only cookie
+- `POST /api/auth/logout` — revoke refresh cookie and logout
 
-- **Ingestion**: customer message enters via API or webhook simulation
-- **Queueing**: request is stored right away as new/queued
-- **AI classification**: a replaceable skill layer labels request category, priority, summary, and routing
-- **Tracking**: admin dashboard sees updates live
-- **Operations**: admins can change status and add internal notes
+### Requests
+- `POST /api/requests` — create a new customer request
+- `GET /api/requests` — list all requests (protected, role-based)
+- `GET /api/requests/:id` — get a single request by ID (protected)
+- `PATCH /api/requests/:id/status` — update request status (protected)
+- `POST /api/requests/:id/notes` — add an internal note (protected)
+- `GET /api/requests/events` — get audit events for requests (protected)
 
-## AI skills layer
+### Webhooks
+- `POST /webhooks/telegram` — Telegram webhook receiver
+- `POST /webhooks/whatsapp` — WhatsApp webhook receiver
 
-The AI layer should be modular and replaceable. It can be implemented as a mock provider initially, with the ability to swap in a real provider later.
+## Frontend
 
-Suggested skills:
-- `Classification Skill`: sales, support, urgent, spam, or other
-- `Priority Skill`: low, medium, or high
-- `Summary Skill`: short internal summary for admins
-- `Routing Skill`: simple queue or workflow assignment
+The frontend includes:
+- login page
+- admin dashboard with live request updates
+- request detail page
+- audit log page with real-time event streaming
+- Axios refresh interceptor for automatic access token renewal
 
-## Minimum data model
+## Architecture overview
 
-The Prisma schema currently defines the following core models:
+- `backend/index.js` — Express server with API routing, webhook mounting, and Socket.IO initialization
+- `backend/src/config/` — database and Redis connection helpers
+- `backend/src/controllers/` — auth, request, and webhook handlers
+- `backend/src/middleware/` — authentication, CSRF, rate limiting, and role checks
+- `backend/src/services/` — auth token logic, webhook ingestion, and AI classification
+- `backend/src/workers/` — background classification worker
+- `frontend/src/` — React app with protected routes and socket integration
 
-- `User`
-  - admin/agent accounts
-  - password hash
-  - role
-  - created timestamp
-- `CustomerRequest`
-  - original message
-  - source channel
-  - customer info
-  - status
-  - category snapshot
-  - priority snapshot
-- `AiClassification`
-  - request_id
-  - provider
-  - category
-  - priority
-  - summary
-  - confidence
-  - raw output
-  - error state
-- `RequestEvent`
-  - request_id
-  - event type
-  - old/new values
-  - actor
-  - metadata
-  - timestamp
-- `InternalNote`
-  - request_id
-  - author
-  - note body
-  - created timestamp
+## Environment variables
 
-## Current backend structure
+Required variables in `backend/.env`:
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/cognifyr
+REDIS_URL=redis://localhost:6379
+ACCESS_TOKEN_SECRET=your_access_token_secret
+REFRESH_TOKEN_SECRET=your_refresh_token_secret
+TELEGRAM_WEBHOOK_SECRET=your_telegram_secret_token
+BACKEND_URL=http://localhost:8000
+NODE_ENV=development
+PORT=8000
+```
 
-`backend/`
-- `index.js` - Express server entry point
-- `package.json` - backend dependencies and scripts
-- `prisma/schema.prisma` - data schema for PostgreSQL
-- `src/config/psql.js` - Prisma client setup
-- `src/config/redis.js` - Redis connection helper
-- `src/middleware/auth.middleware.js` - JWT auth and refresh token middleware
-- `src/routes/app.routes.js` - mounted API router (currently empty)
-- `src/utils/tokens.js` - access and refresh token generation
-
-`frontend/`
-- currently empty
-
-## What is implemented today
-
-- Express server configured with CORS, security headers, JSON body parsing, and cookie parsing
-- PostgreSQL schema defined via Prisma for all required models
-- Redis connection setup for caching or background queue use
-- JWT middleware for protected routes and refresh token validation
-- A mounted `/api` router ready for endpoints
-
-## What still needs to be built
-
-- request ingestion API endpoints for new customer requests
-- background worker or mock AI service for classification and priority assignment
-- live update mechanism for admin dashboard (WebSockets, SSE, or polling)
-- admin dashboard UI in `frontend/`
-- request event logging and internal notes endpoints
-- routing logic and queue assignment
+Optional or provider-specific variables:
+```env
+GOOGLE_API_KEY=your_google_api_key
+```
 
 ## Setup
 
@@ -113,28 +83,35 @@ The Prisma schema currently defines the following core models:
    npm install
    ```
 
-2. Create a `.env` file in `backend/` with at minimum:
-   ```env
-   DATABASE_URL=postgresql://user:password@localhost:5432/cognifyr
-   REDIS_URL=redis://localhost:6379
-   ACCESS_TOKEN_SECRET=your_access_secret
-   REFRESH_TOKEN_SECRET=your_refresh_secret
-   NODE_ENV=development
+2. Install frontend dependencies:
+   ```bash
+   cd ../frontend
+   npm install
    ```
 
-3. Run the backend server:
-   ```bash
-   npm run dev
-   ```
+3. Create or update `backend/.env` as described above.
 
-4. Use Prisma to manage the database schema:
+4. Run Prisma migrations:
    ```bash
+   cd backend
    npx prisma generate
    npx prisma migrate dev --name init
    ```
 
+5. Start backend server:
+   ```bash
+   npm run dev
+   ```
+
+6. Start frontend dev server:
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+
 ## Notes
 
-- The admin dashboard is not implemented yet; `frontend/` is a placeholder.
-- Current API routing and request handling are scaffolded but need endpoint logic.
-- The AI workflow is intentionally designed as a replaceable module so a mock version can be used during assessment.
+- The backend now supports refresh token renewal without forcing login on page refresh.
+- Telegram and WhatsApp webhook routes are active and consume incoming messages into the request queue.
+- The audit log page is implemented and receives real-time socket updates.
+- The AI classification worker requires a valid provider API key if using real AI integration.
