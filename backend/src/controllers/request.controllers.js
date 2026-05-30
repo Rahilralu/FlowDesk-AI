@@ -51,6 +51,7 @@ export const handleAddNote = async (req, res) => {
   if (!body || body.trim() === '') {
     return res.status(400).json({ error: 'Note body is required' });
   }
-  const note = await addNote(req.params.id, body.trim());
+
+  const note = await addNote(req.params.id, body.trim(), req.user.id);
   return res.json({ success: true, note });
 };

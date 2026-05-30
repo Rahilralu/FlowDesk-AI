@@ -106,13 +106,15 @@ export const updateRequestStatus = async (id, status) => {
   return updated;
 };
 
-export const addNote = async (id, body) => {
+// requestService.js
+export const addNote = async (id, body, userId) => {
   const request = await prisma.customerRequest.findUnique({ where: { id } });
   if (!request) throw new Error('Request not found');
   const note = await prisma.internalNote.create({
     data: {
-      requestId: id,
       body,
+      requestId: id,
+      authorId: userId,
     },
   });
   await prisma.requestEvent.create({
@@ -122,5 +124,6 @@ export const addNote = async (id, body) => {
       newValue: body,
     },
   });
+
   return note;
 };

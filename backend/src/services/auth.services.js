@@ -10,8 +10,8 @@ export const loginUser = async ({ email,password }) => {
     const isValid = await bcrypt.compare(password,user.password);
     if(!isValid) throw new Error('Invalid Credentials');
 
-    const access_token = generateAccessToken(email);
-    const refresh_token = generateRefreshToken(email);
+    const access_token = generateAccessToken(user);
+    const refresh_token = generateRefreshToken(user);
 
     const hashed = await bcrypt.hash(refresh_token,Number(process.env.SALT));
 
@@ -45,8 +45,8 @@ export const refreshAccessToken = async (token) => {
 
     await prisma.refreshToken.deleteMany({ where : { id: matched.id}});
 
-    const newAccessToken = generateAccessToken({ email: payload.email});
-    const newRefreshToken = generateRefreshToken({ email:payload.email });
+    const newAccessToken = generateAccessToken({ id: payload.id,email: payload.email, role: payload.role });
+    const newRefreshToken = generateRefreshToken({ id: payload.id, email: payload.email, role: payload.role});
     const hashed = await bcrypt.hash(newRefreshToken, Number(process.env.SALT));
 
     await prisma.refreshToken.create({
