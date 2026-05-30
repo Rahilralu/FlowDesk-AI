@@ -36,6 +36,12 @@ export const handleGetRequestById = async (req, res) => {
   return res.json({ success: true, request });
 };
 
+export const handleGetRequestEvents = async (req, res) => {
+  const { page, limit } = req.query;
+  const data = await getRequestEvents({ page, limit });
+  return res.json({ success: true, ...data });
+};
+
 export const handleUpdateStatus = async (req, res) => {
   const { status } = req.body;
   const allowed = ['NEW', 'QUEUED', 'PROCESSING', 'CLASSIFIED', 'RESOLVED', 'FAILED'];

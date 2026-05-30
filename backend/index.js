@@ -9,10 +9,12 @@ import http from 'http';
 import { initSocket } from './src/config/socket.js';
 import './src/workers/classificationWorker.js';
 import { globalLimiter } from "./src/middleware/rateLimiter.js";
+import telegramWebhook from './src/webhooks/telegram.webhook.js'
 
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1)
 
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json());
@@ -20,6 +22,8 @@ app.use(cookieParser());
 app.use(helmet());
 app.use(globalLimiter)
 app.use('/api', routes);
+app.use('/webhooks/whatsapp', express.urlencoded({ extended: false }))
+app.use('/webhooks', telegramWebhook)
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

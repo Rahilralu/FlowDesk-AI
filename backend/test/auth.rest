@@ -44,12 +44,12 @@ Cookie: csrfToken=abc123
 ### Create Request 3
 POST http://localhost:8000/api/requests
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGZsb3dkZXNrLmNvbSIsImlhdCI6MTc4MDA5ODA3NSwiZXhwIjoxNzgwMTAxNjc1fQ.XPmQea3zRmVSgzk17fhjKj-VMCovzmsKkCATIA35wdc
-X-CSRF-Token: abc123
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtcHFjNG1xYjAwMDBpamZsbnE0cmxvMnIiLCJlbWFpbCI6ImFkbWluQGZsb3dkZXNrLmNvbSIsImlhdCI6MTc4MDExMzk3OSwiZXhwIjoxNzgwNzE4Nzc5fQ.PhOGdyQvl8D7mNObCTKWEaatc4ytaoQ7Z5dGkzErXzc
 Cookie: csrfToken=abc123
+X-CSRF-Token: abc123
 
 {
-  "message": "BUY NOW CHEAP ROLEX WATCHES CLICK HERE",
+  "message": "Hello free products lol free free",
   "customerName": "Spammer",
   "source": "API"
 }

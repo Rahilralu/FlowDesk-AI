@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js",
+   "dev": "nodemon index.js",
     "worker": "node src/workers/classificationWorker.js"
   },
   "keywords": [],
@@ -32,6 +32,7 @@
     "psql": "^0.0.1",
     "redis": "^5.12.1",
     "socket.io": "^4.8.3",
+    "twilio": "^6.0.2",
     "uuid": "^14.0.0",
     "zod": "^4.4.3"
   },

@@ -5,7 +5,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtcHFjNG1xY
 
 ### Get with filters
 GET http://localhost:8000/api/requests?status=CLASSIFIED&priority=HIGH
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtcHFjNG1xYjAwMDBpamZsbnE0cmxvMnIiLCJlbWFpbCI6ImFkbWluQGZsb3dkZXNrLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc4MDEwMjk3MSwiZXhwIjoxNzgwMTAzODcxfQ.VJoV2UH3nKXHEFzAOWUcn1Hx4QgW0tQ6AnCCtRHSk98
+Authorization: Bearer ..VJoV2UH3nKXHEFzAOWUcn1Hx4QgW0tQ6AnCCtRHSk98
 ###
 
 ### Get request by id
@@ -26,7 +26,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtcHFjNG1xY
 ### Add note
 POST http://localhost:8000/api/requests/cmprlhh290000ij014gnerwhp/notes
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtcHFjNG1xYjAwMDBpamZsbnE0cmxvMnIiLCJlbWFpbCI6ImFkbWluQGZsb3dkZXNrLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc4MDEwMjk3MSwiZXhwIjoxNzgwMTAzODcxfQ.VJoV2UH3nKXHEFzAOWUcn1Hx4QgW0tQ6AnCCtRHSk98
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtcHFjNG1xYjAwMDBpamZsbnE0cmxvMnIiLCJlbWFpbCI6ImFkbWluQGZsb3dkZXNrLmNvbSIsImlhdCI6MTc4MDExMzk3OSwiZXhwIjoxNzgwNzE4Nzc5fQ.PhOGdyQvl8D7mNObCTKWEaatc4ytaoQ7Z5dGkzErXzc
 X-CSRF-Token: abc123
 Cookie: csrfToken=abc123
 

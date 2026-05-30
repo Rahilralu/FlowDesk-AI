@@ -1,6 +1,13 @@
 import prisma from '../config/psql.js';
 import { requestQueue } from '../queues/requestQueue.js';
 import { createHash } from 'crypto';
+import { publishRequestEvent } from '../utils/eventPublisher.js';
+
+const createRequestEvent = async (data) => {
+  const event = await prisma.requestEvent.create({ data });
+  await publishRequestEvent(event);
+  return event;
+};
 
 export const createRequest = async (data) => {
   const idempotencyKey = createHash('sha256')
@@ -31,13 +38,11 @@ export const createRequest = async (data) => {
     },
   });
 
-  await prisma.requestEvent.create({
-    data: {
-      requestId: request.id,
-      eventType: 'REQUEST_CREATED',
-      newValue: 'NEW',
-      metadata: JSON.stringify({ source: request.source }),
-    },
+  await createRequestEvent({
+    requestId: request.id,
+    eventType: 'REQUEST_CREATED',
+    newValue: 'NEW',
+    metadata: JSON.stringify({ source: request.source }),
   });
 
   await requestQueue.add('classify', { requestId: request.id }, {
@@ -49,14 +54,12 @@ export const createRequest = async (data) => {
     data: { status: 'QUEUED' },
   });
 
-  await prisma.requestEvent.create({
-    data: {
-      requestId: request.id,
-      eventType: 'STATUS_CHANGED',
-      oldValue: 'NEW',
-      newValue: 'QUEUED',
-      metadata: JSON.stringify({ trigger: 'enqueued' }),
-    },
+  await createRequestEvent({
+    requestId: request.id,
+    eventType: 'STATUS_CHANGED',
+    oldValue: 'NEW',
+    newValue: 'QUEUED',
+    metadata: JSON.stringify({ trigger: 'enqueued' }),
   });
 
   return { request, duplicate: false };
@@ -84,6 +87,23 @@ export const getRequests = async (filters) => {
   return { requests,total,page: Number(page),totalPages: Math.ceil(total / limit) };
 };
 
+export const getRequestEvents = async (filters) => {
+  const { page = 1, limit = 100 } = filters;
+  const total = await prisma.requestEvent.count();
+  const events = await prisma.requestEvent.findMany({
+    orderBy: { createdAt: 'desc' },
+    skip: (page - 1) * limit,
+    take: Number(limit),
+    include: { actor: true },
+  });
+  return {
+    events,
+    total,
+    page: Number(page),
+    totalPages: Math.ceil(total / limit),
+  };
+};
+
 export const getRequestById = async (id) => {
   const request = await prisma.customerRequest.findUnique({ where: { id },include: { aiClassification: true, requestEvents: { orderBy: { createdAt: 'asc' }, }, internalNotes: { orderBy: { createdAt: 'asc' }}}});
   if (!request) throw new Error('Request not found');
@@ -94,14 +114,12 @@ export const updateRequestStatus = async (id, status) => {
   const request = await prisma.customerRequest.findUnique({ where: { id } });
   if (!request) throw new Error('Request not found');
   const updated = await prisma.customerRequest.update({ where: { id }, data: { status },});
-  await prisma.requestEvent.create({
-    data: {
-      requestId: id,
-      eventType: 'STATUS_CHANGED',
-      oldValue: request.status,
-      newValue: status,
-      metadata: JSON.stringify({ trigger: 'admin_update' }),
-    },
+  await createRequestEvent({
+    requestId: id,
+    eventType: 'STATUS_CHANGED',
+    oldValue: request.status,
+    newValue: status,
+    metadata: JSON.stringify({ trigger: 'admin_update' }),
   });
   return updated;
 };
@@ -117,12 +135,11 @@ export const addNote = async (id, body, userId) => {
       authorId: userId,
     },
   });
-  await prisma.requestEvent.create({
-    data: {
-      requestId: id,
-      eventType: 'NOTE_ADDED',
-      newValue: body,
-    },
+  await createRequestEvent({
+    requestId: id,
+    eventType: 'NOTE_ADDED',
+    newValue: body,
+    actorId: userId,
   });
 
   return note;

@@ -7,6 +7,8 @@ export function generateAccessToken(user) {
 
 export function generateRefreshToken(user) {
   return jwt.sign(
-    { id: user.id,email: user.email},process.env.REFRESH_TOKEN_SECRET,{ expiresIn: '7d' }
+    { id: user.id, email: user.email, role: user.role },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: '7d' }
   );
 }
