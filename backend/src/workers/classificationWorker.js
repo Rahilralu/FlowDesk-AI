@@ -1,7 +1,7 @@
 import { Worker } from 'bullmq';
 import { createClient } from 'redis';
 import prisma from '../config/psql.js';
-import { connectRedis } from '../config/redis.js';
+import { redisConnection } from '../config/redis.js';
 import { classifyRequest } from '../services/gemini.services.js';
 
 const publisher = createClient({ url: process.env.REDIS_URL });
@@ -117,7 +117,7 @@ const worker = new Worker(
   // rest of catch...
     }
   },
-  { connection: connectRedis,
+  { connection: redisConnection,
     concurrency: 1, 
    }
 );
