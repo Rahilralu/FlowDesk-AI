@@ -1,0 +1,36 @@
+### Get all requests
+GET http://localhost:8000/api/requests
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGZsb3dkZXNrLmNvbSIsImlhdCI6MTc4MDEwMTc5NiwiZXhwIjoxNzgwMTA1Mzk2fQ.sDHs0kP7eH1Nb47ODw9-IoRboGX8cofkM_qATuj36c0
+
+###
+
+### Get with filters
+GET http://localhost:8000/api/requests?status=CLASSIFIED&priority=HIGH
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGZsb3dkZXNrLmNvbSIsImlhdCI6MTc4MDEwMTc5NiwiZXhwIjoxNzgwMTA1Mzk2fQ.sDHs0kP7eH1Nb47ODw9-IoRboGX8cofkM_qATuj36c0
+
+###
+
+### Get request by id
+GET http://localhost:8000/api/requests/YOUR_REQUEST_ID
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGZsb3dkZXNrLmNvbSIsImlhdCI6MTc4MDEwMTc5NiwiZXhwIjoxNzgwMTA1Mzk2fQ.sDHs0kP7eH1Nb47ODw9-IoRboGX8cofkM_qATuj36c0
+
+### Update status
+PATCH http://localhost:8000/api/requests/YOUR_REQUEST_ID/status
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGZsb3dkZXNrLmNvbSIsImlhdCI6MTc4MDEwMTc5NiwiZXhwIjoxNzgwMTA1Mzk2fQ.sDHs0kP7eH1Nb47ODw9-IoRboGX8cofkM_qATuj36c0
+
+{
+  "status": "RESOLVED"
+}
+
+###
+
+### Add note
+POST http://localhost:8000/api/requests/YOUR_REQUEST_ID/notes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGZsb3dkZXNrLmNvbSIsImlhdCI6MTc4MDEwMTc5NiwiZXhwIjoxNzgwMTA1Mzk2fQ.sDHs0kP7eH1Nb47ODw9-IoRboGX8cofkM_qATuj36c0
+Cookie: csrfToken=abc123
+
+{
+  "body": "Followed up with customer via email"
+}

@@ -58,7 +58,6 @@ export const cookie_validator = async (req,res,next) => {
                 return res.status(403).json({success : false , message: "Invalid refresh token"});
             }
             const access_token = generateAccessToken(
-                stored.user.id,
                 stored.user.email
             )
 
@@ -84,6 +83,6 @@ export const csrfMiddleware = (req, res, next) => {
   if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
     return res.status(403).json({ success: false, message: "CSRF token invalid" })
   }
-
+  
   next()
 }

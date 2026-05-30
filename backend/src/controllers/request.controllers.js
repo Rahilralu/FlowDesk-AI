@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { createRequest } from '../services/request.services.js'; 
-
+import { createRequest, getRequests,getRequestById,updateRequestStatus,addNote} from '../services/request.services.js';
 const createRequestSchema = z.object({
     message: z.string().min(1,'Message is required'),
     customerName: z.string().min(1,'Customer name is required'),
@@ -14,7 +13,44 @@ export const handleCreateRequest = async (req, res) => {
   if (!result.success) {
     return res.status(400).json({ error: result.error.flatten() });
   }
+  const { request, duplicate } = await createRequest(result.data);
+  if (duplicate) {
+    return res.status(200).json({ 
+      success: true, 
+      duplicate: true,
+      message: 'Request already exists',
+      request 
+    });
+  }
+  return res.status(201).json({ success: true, duplicate: false, request });
+};
 
-  const request = await createRequest(result.data);
-  return res.status(201).json({ success: true, request });
+export const handleGetRequests = async (req, res) => {
+  const { status, priority, category, page, limit } = req.query;
+  const data = await getRequests({ status, priority, category, page, limit });
+  return res.json({ success: true, ...data });
+};
+
+export const handleGetRequestById = async (req, res) => {
+  const request = await getRequestById(req.params.id);
+  return res.json({ success: true, request });
+};
+
+export const handleUpdateStatus = async (req, res) => {
+  const { status } = req.body;
+  const allowed = ['NEW', 'QUEUED', 'PROCESSING', 'CLASSIFIED', 'RESOLVED', 'FAILED'];
+  if (!status || !allowed.includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+  const request = await updateRequestStatus(req.params.id, status);
+  return res.json({ success: true, request });
+};
+
+export const handleAddNote = async (req, res) => {
+  const { body } = req.body;
+  if (!body || body.trim() === '') {
+    return res.status(400).json({ error: 'Note body is required' });
+  }
+  const note = await addNote(req.params.id, body.trim());
+  return res.json({ success: true, note });
 };

@@ -1,0 +1,55 @@
+### Login
+POST http://localhost:8000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@flowdesk.com",
+  "password": "admin123"
+}
+
+###
+
+### Create Request
+POST http://localhost:8000/api/requests
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGZsb3dkZXNrLmNvbSIsImlhdCI6MTc4MDA5ODA3NSwiZXhwIjoxNzgwMTAxNjc1fQ.XPmQea3zRmVSgzk17fhjKj-VMCovzmsKkCATIA35wdc
+X-CSRF-Token: abc123
+Cookie: csrfToken=abc123
+
+{
+  "message": "I cannot access my dashboard after payment",
+  "customerName": "John Doe",
+  "customerEmail": "john@example.com",
+  "source": "WEB"
+}
+
+###
+
+### Create Request 2
+POST http://localhost:8000/api/requests
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGZsb3dkZXNrLmNvbSIsImlhdCI6MTc4MDA5ODA3NSwiZXhwIjoxNzgwMTAxNjc1fQ.XPmQea3zRmVSgzk17fhjKj-VMCovzmsKkCATIA35wdc
+X-CSRF-Token: abc123
+Cookie: csrfToken=abc123
+
+{
+  "message": "I want to upgrade my plan to enterprise",
+  "customerName": "Jane Smith",
+  "customerEmail": "jane@example.com",
+  "source": "EMAIL"
+}
+
+###
+
+### Create Request 3
+POST http://localhost:8000/api/requests
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGZsb3dkZXNrLmNvbSIsImlhdCI6MTc4MDA5ODA3NSwiZXhwIjoxNzgwMTAxNjc1fQ.XPmQea3zRmVSgzk17fhjKj-VMCovzmsKkCATIA35wdc
+X-CSRF-Token: abc123
+Cookie: csrfToken=abc123
+
+{
+  "message": "BUY NOW CHEAP ROLEX WATCHES CLICK HERE",
+  "customerName": "Spammer",
+  "source": "API"
+}
