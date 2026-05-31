@@ -1,14 +1,17 @@
 import { Redis } from 'ioredis';
 
-const redisOptions = process.env.NODE_ENV === 'production'
-  ? { tls: {}, maxRetriesPerRequest: null }
-  : { maxRetriesPerRequest: null };
+const getRedisOptions = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  return {
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
+    tls: isProduction ? { rejectUnauthorized: false } : undefined,
+  };
+};
 
-// for BullMQ
-export const redisConnection = new Redis(process.env.REDIS_URL, redisOptions);
+export const redisConnection = new Redis(process.env.REDIS_URL, getRedisOptions());
 
-// for pub/sub and general use
-export const createRedisClient = () => new Redis(process.env.REDIS_URL, redisOptions);
+export const createRedisClient = () => new Redis(process.env.REDIS_URL, getRedisOptions());
 
 export async function connectRedis() {
   console.log('Redis connected');
