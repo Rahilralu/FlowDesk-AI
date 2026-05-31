@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api, { currentUserId } from '../api/axios';
+import api, { currentUserId, currentUserRole } from '../api/axios';
 
 const statusColor = {
   NEW: 'bg-gray-500/10 text-gray-400',
@@ -45,8 +45,16 @@ export default function RequestDetail() {
         const res = await api.get(`/requests/${id}`);
         setRequest(res.data.request);
         setNewStatus(res.data.request.status);
-      } catch { navigate('/'); }
-      finally { setLoading(false); }
+      } catch (err) {
+        if (err.response?.status === 403) {
+          showToast('You do not have permission to view this request.', 'error');
+          setTimeout(() => navigate('/'), 2000);
+        } else {
+          navigate('/');
+        }
+      } finally {
+        setLoading(false);
+      }
     };
     fetchRequest();
   }, [id]);
@@ -57,8 +65,15 @@ export default function RequestDetail() {
       await api.patch(`/requests/${id}/status`, { status: newStatus });
       setRequest((r) => ({ ...r, status: newStatus }));
       showToast('Status updated');
-    } catch { showToast('Failed to update status', 'error'); }
-    finally { setSaving(false); }
+    } catch (err) {
+      if (err.response?.status === 403) {
+        showToast('Only admins and agents can update status.', 'error');
+      } else {
+        showToast('Failed to update status.', 'error');
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addNote = async () => {
@@ -72,8 +87,15 @@ export default function RequestDetail() {
       }));
       setNote('');
       showToast('Note added');
-    } catch { showToast('Failed to add note', 'error'); }
-    finally { setSaving(false); }
+    } catch (err) {
+      if (err.response?.status === 403) {
+        showToast('You do not have permission to add notes.', 'error');
+      } else {
+        showToast('Failed to add note.', 'error');
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const deleteNote = async (noteId) => {
@@ -84,7 +106,13 @@ export default function RequestDetail() {
         internalNotes: r.internalNotes.filter((n) => n.id !== noteId),
       }));
       showToast('Note deleted');
-    } catch { showToast('Failed to delete note', 'error'); }
+    } catch (err) {
+      if (err.response?.status === 403) {
+        showToast('Only admins can delete notes.', 'error');
+      } else {
+        showToast('Failed to delete note.', 'error');
+      }
+    }
   };
 
   const deleteRequest = async () => {
@@ -93,8 +121,15 @@ export default function RequestDetail() {
     try {
       await api.delete(`/requests/${id}`);
       navigate('/');
-    } catch { showToast('Failed to delete request', 'error'); }
-    finally { setDeleting(false); }
+    } catch (err) {
+      if (err.response?.status === 403) {
+        showToast('Only admins can delete requests.', 'error');
+      } else {
+        showToast('Failed to delete request.', 'error');
+      }
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (loading) return (
@@ -104,6 +139,7 @@ export default function RequestDetail() {
   );
 
   const ai = request?.aiClassification;
+  const isAdmin = currentUserRole === 'ADMIN';
 
   return (
     <div className="min-h-screen bg-[#0f1117]">
@@ -127,16 +163,30 @@ export default function RequestDetail() {
             <p className="text-gray-500 text-xs font-mono">{request?.id}</p>
           </div>
         </div>
-        <button
-          onClick={deleteRequest}
-          disabled={deleting}
-          className="flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg text-sm transition-colors disabled:opacity-50"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-          {deleting ? 'Deleting...' : 'Delete'}
-        </button>
+
+        <div className="flex items-center gap-3">
+          {/* Role badge */}
+          <span className={`text-xs px-2 py-1 rounded-full border ${
+            isAdmin
+              ? 'bg-violet-500/10 text-violet-400 border-violet-500/20'
+              : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+          }`}>
+            {isAdmin ? 'Admin' : 'Agent'}
+          </span>
+
+          {isAdmin && (
+            <button
+              onClick={deleteRequest}
+              disabled={deleting}
+              className="flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg text-sm transition-colors disabled:opacity-50"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              {deleting ? 'Deleting...' : 'Delete'}
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -281,7 +331,7 @@ export default function RequestDetail() {
                   <span className="text-gray-300 text-xs font-medium">{n.author?.name || 'Unknown'}</span>
                   <span className="text-gray-600 text-xs">{n.author?.email}</span>
                   <span className="text-gray-600 text-xs ml-auto">{timeAgo(n.createdAt)}</span>
-                  {n.author?.id === currentUserId && (
+                  {isAdmin && n.author?.id === currentUserId && (
                     <button
                       onClick={() => deleteNote(n.id)}
                       className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 transition-all ml-1"

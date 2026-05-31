@@ -4,11 +4,13 @@ const BASE_URL = 'http://localhost:8000/api';
 
 let accessToken = null;
 export let currentUserId = null;
+export let currentUserRole = null;
 
 export const setAccessToken = (token) => { accessToken = token; };
 export const getAccessToken = () => accessToken;
 export const clearAccessToken = () => { accessToken = null; };
 export const setCurrentUserId = (id) => { currentUserId = id; };
+export const setCurrentUserRole = (role) => { currentUserRole = role; };
 
 const api = axios.create({
   baseURL: BASE_URL,

@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import api, { clearAccessToken } from '../api/axios';
+import api, { clearAccessToken, currentUserRole } from '../api/axios';
 import { useSocket } from '../hooks/useSocket';
 
 const priorityColor = {
@@ -116,15 +116,16 @@ export default function Dashboard() {
     setSearchParams(next);
   };
 
-  const logout = async () => {
-    await api.post('/auth/logout');
-    clearAccessToken();
-        navigate('/login');
-  };
   const setPage = (newPage) => {
     const next = new URLSearchParams(searchParams);
     next.set('page', String(newPage));
     setSearchParams(next);
+  };
+
+  const logout = async () => {
+    await api.post('/auth/logout');
+    clearAccessToken();
+    navigate('/login');
   };
 
   const statCards = [
@@ -141,6 +142,14 @@ export default function Dashboard() {
     yellow: 'text-yellow-400 bg-yellow-500/10',
     green: 'text-green-400 bg-green-500/10',
   };
+
+  const navItems = [
+    { label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', active: !status },
+    { label: 'All Requests', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', count: stats.total },
+    { label: 'High Priority', icon: 'M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9', count: stats.high },
+    { label: 'Failed', icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', count: stats.failed },
+    ...(currentUserRole === 'ADMIN' ? [{ label: 'Audit Log', icon: 'M4 6h16M4 10h16M4 14h16M4 18h16' }] : []),
+  ];
 
   return (
     <div className="min-h-screen bg-[#0f1117] flex">
@@ -164,13 +173,7 @@ export default function Dashboard() {
 
         <nav className="flex-1 p-4 space-y-1">
           <p className="text-xs text-gray-500 uppercase tracking-wider px-3 mb-3">Main</p>
-          {[
-            { label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', active: !status },
-            { label: 'All Requests', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', count: stats.total },
-            { label: 'High Priority', icon: 'M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9', count: stats.high },
-            { label: 'Failed', icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', count: stats.failed },
-            { label: 'Audit Log', icon: 'M4 6h16M4 10h16M4 14h16M4 18h16' },
-          ].map((item) => (
+          {navItems.map((item) => (
             <button
               key={item.label}
               onClick={() => {
@@ -218,6 +221,13 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <span className={`text-xs px-2 py-1 rounded-full border ${
+              currentUserRole === 'ADMIN'
+                ? 'bg-violet-500/10 text-violet-400 border-violet-500/20'
+                : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+            }`}>
+              {currentUserRole === 'ADMIN' ? 'Admin' : 'Agent'}
+            </span>
             <div className="flex items-center gap-2 text-xs">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
               <span className="text-gray-400 hidden sm:block">Live</span>

@@ -6,7 +6,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import RequestDetail from './pages/RequestDetail';
 import AuditLog from './pages/AuditLog';
-import api, { setAccessToken, getAccessToken, setCurrentUserId } from './api/axios';
+import api, { setAccessToken, getAccessToken, setCurrentUserId, setCurrentUserRole } from './api/axios';
 
 const BASE_URL = 'http://localhost:8000/api';
 
@@ -22,9 +22,10 @@ export default function App() {
           {},
           { withCredentials: true }
         );
-        setAccessToken(res.data.accessToken);
         const decoded = jwtDecode(res.data.accessToken);
         setCurrentUserId(decoded.id);
+        setCurrentUserRole(decoded.role); 
+        setAccessToken(res.data.accessToken);
         setIsAuth(true);
       } catch {
         setIsAuth(false);

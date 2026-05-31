@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import api, { setAccessToken, setCurrentUserId } from '../api/axios';
+import api, { setAccessToken, setCurrentUserId, setCurrentUserRole } from '../api/axios';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -20,9 +20,17 @@ export default function Login() {
       setAccessToken(res.data.accessToken);
       const decoded = jwtDecode(res.data.accessToken);
       setCurrentUserId(decoded.id);
+      setCurrentUserRole(decoded.role);
       navigate('/');
-    } catch {
-      setError('Invalid credentials. Please try again.');
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 403) {
+        setError('Your account does not have permission to access this panel.');
+      } else if (status === 401) {
+        setError('Invalid email or password. Please try again.');
+      } else {
+        setError('Something went wrong. Please try again later.');
+      }
     } finally {
       setLoading(false);
     }
