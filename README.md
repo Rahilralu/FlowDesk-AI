@@ -1,64 +1,73 @@
 # FlowDesk AI
 
-FlowDesk AI is an internal operations tool for capturing customer requests from multiple channels, classifying them with AI, and tracking them through a live admin workflow.
+FlowDesk AI is a customer request management platform built for internal operations. It collects requests from multiple channels, stores them in PostgreSQL, classifies them using AI, and presents them in a protected admin dashboard with real-time updates.
 
-## What is implemented
+## Repository structure
 
-- Multi-channel ingestion from:
-  - Telegram webhook
-  - WhatsApp webhook
-  - web/API request creation
-- Request storage in PostgreSQL via Prisma
-- Background classification queue powered by BullMQ and Redis
-- AI classification worker with provider integration
-- JWT auth with access + refresh token flow
-- Refresh cookie handling with secure cross-origin support
+- `backend/` — Express API server, authentication, request handling, webhook receivers, and worker logic
+- `frontend/` — React + Vite admin dashboard, login, request detail, and audit log UI
+- `backend/prisma/` — Prisma schema and migration history
+- `backend/src/` — backend application code
+- `frontend/src/` — frontend application code
+
+## Features
+
+- User authentication with JWT access token + refresh token flow
 - Protected admin routes with role-based access control
-- Real-time updates via Socket.IO
-- Audit log endpoint and event streaming
-- Frontend dashboard with login, request detail, and audit log pages
+- Customer request ingestion via API and webhook endpoints
+- AI-powered request classification worker using external provider integration
+- Redis-backed queue processing with BullMQ
+- PostgreSQL storage via Prisma ORM
+- Real-time live updates using Socket.IO
+- Audit log for request event tracking and history
+- Admin dashboard with filters, request list, request details, and audit log
 
-## Backend endpoints
+## Backend API
 
-### Auth
-- `POST /api/auth/login` — login and set refresh cookie
+### Authentication
+- `POST /api/auth/login` — login and start a session
 - `POST /api/auth/refresh` — refresh access token using HTTP-only cookie
-- `POST /api/auth/logout` — revoke refresh cookie and logout
+- `POST /api/auth/logout` — revoke refresh session
 
 ### Requests
 - `POST /api/requests` — create a new customer request
-- `GET /api/requests` — list all requests (protected, role-based)
-- `GET /api/requests/:id` — get a single request by ID (protected)
+- `GET /api/requests` — list requests (protected)
+- `GET /api/requests/:id` — retrieve a request by ID (protected)
 - `PATCH /api/requests/:id/status` — update request status (protected)
-- `POST /api/requests/:id/notes` — add an internal note (protected)
-- `GET /api/requests/events` — get audit events for requests (protected)
+- `POST /api/requests/:id/notes` — add an internal note to a request (protected)
+- `GET /api/requests/events` — fetch request audit events (protected)
 
 ### Webhooks
-- `POST /webhooks/telegram` — Telegram webhook receiver
-- `POST /webhooks/whatsapp` — WhatsApp webhook receiver
+- `POST /webhooks/telegram` — receive and ingest Telegram messages
+- `POST /webhooks/whatsapp` — receive and ingest WhatsApp messages
 
-## Frontend
+## Setup
 
-The frontend includes:
-- login page
-- admin dashboard with live request updates
-- request detail page
-- audit log page with real-time event streaming
-- Axios refresh interceptor for automatic access token renewal
+### Prerequisites
 
-## Architecture overview
+- Node.js 20+ or later
+- PostgreSQL
+- Redis
+- npm
 
-- `backend/index.js` — Express server with API routing, webhook mounting, and Socket.IO initialization
-- `backend/src/config/` — database and Redis connection helpers
-- `backend/src/controllers/` — auth, request, and webhook handlers
-- `backend/src/middleware/` — authentication, CSRF, rate limiting, and role checks
-- `backend/src/services/` — auth token logic, webhook ingestion, and AI classification
-- `backend/src/workers/` — background classification worker
-- `frontend/src/` — React app with protected routes and socket integration
+### Backend install
 
-## Environment variables
+```bash
+cd backend
+npm install
+```
 
-Required variables in `backend/.env`:
+### Frontend install
+
+```bash
+cd frontend
+npm install
+```
+
+### Environment variables
+
+Create `backend/.env` with the following values:
+
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/cognifyr
 REDIS_URL=redis://localhost:6379
@@ -70,48 +79,73 @@ NODE_ENV=development
 PORT=8000
 ```
 
-Optional or provider-specific variables:
+Add provider-specific values if needed:
+
 ```env
 GOOGLE_API_KEY=your_google_api_key
+TWILIO_ACCOUNT_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_token
 ```
 
-## Setup
+### Database setup
 
-1. Install backend dependencies:
-   ```bash
-   cd backend
-   npm install
-   ```
+```bash
+cd backend
+npx prisma generate
+npx prisma migrate dev --name init
+```
 
-2. Install frontend dependencies:
-   ```bash
-   cd ../frontend
-   npm install
-   ```
+## Run locally
 
-3. Create or update `backend/.env` as described above.
+### Backend
 
-4. Run Prisma migrations:
-   ```bash
-   cd backend
-   npx prisma generate
-   npx prisma migrate dev --name init
-   ```
+```bash
+cd backend
+npm run dev
+```
 
-5. Start backend server:
-   ```bash
-   npm run dev
-   ```
+### Frontend
 
-6. Start frontend dev server:
-   ```bash
-   cd frontend
-   npm run dev
-   ```
+```bash
+cd frontend
+npm run dev
+```
 
-## Notes
+### Worker
 
-- The backend now supports refresh token renewal without forcing login on page refresh.
-- Telegram and WhatsApp webhook routes are active and consume incoming messages into the request queue.
-- The audit log page is implemented and receives real-time socket updates.
-- The AI classification worker requires a valid provider API key if using real AI integration.
+```bash
+cd backend
+npm run worker
+```
+
+## Useful scripts
+
+### Backend
+- `npm run dev` — start backend with nodemon
+- `npm start` — start backend normally
+- `npm run worker` — run the classification worker
+
+### Frontend
+- `npm run dev` — start Vite dev server
+- `npm run build` — build production-ready frontend assets
+- `npm run preview` — preview the production build
+- `npm run lint` — run ESLint
+
+## Project notes
+
+- The frontend uses `react-router-dom` and `socket.io-client` for navigation and real-time updates.
+- The backend uses `express`, `bullmq`, `redis`, and `socket.io` to process requests and emit live events.
+- Prisma handles PostgreSQL data access and schema migrations.
+
+## Deployment notes
+
+- Ensure `BACKEND_URL` points to the live backend for the frontend configuration
+- Use secure secrets for `ACCESS_TOKEN_SECRET` and `REFRESH_TOKEN_SECRET`
+- Run Redis and PostgreSQL before starting the backend
+- Start the worker process alongside the backend for AI classification jobs
+
+## Troubleshooting
+
+- If login or token refresh fails, check the backend `.env` secrets and CORS configuration
+- If webhooks are not working, verify the webhook secret and the incoming request body format
+- If real-time updates are missing, ensure Socket.IO is connected and the server is running
