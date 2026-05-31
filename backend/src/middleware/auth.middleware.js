@@ -73,14 +73,3 @@ export const cookie_validator = async (req, res, next) => {
         res.status(500).json({ success: false, message: "Server Error" })
     }
 }
-
-export const csrfMiddleware = (req, res, next) => {
-    const csrfCookie = req.cookies?.csrfToken
-    const csrfHeader = req.headers["x-csrf-token"]
-
-    if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
-        return res.status(403).json({ success: false, message: "CSRF token invalid" })
-    }
-
-    next()
-}

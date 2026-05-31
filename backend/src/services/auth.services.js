@@ -27,7 +27,7 @@ export const loginUser = async ({ email, password }) => {
 export const refreshAccessToken = async (token) => {
   const payload = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
 
-  const tokens = await prisma.RefreshToken.findMany({
+  const tokens = await prisma.refreshToken.findMany({
     where: { userId: payload.id, expiresAt: { gt: new Date() } },
   });
 
@@ -41,7 +41,7 @@ export const refreshAccessToken = async (token) => {
   if (!matched) throw new Error('Invalid refresh token');
   if (matched.expiresAt < new Date()) throw new Error('Refresh token expired');
 
-  await prisma.RefreshToken.deleteMany({ where: { id: matched.id } });
+  await prisma.refreshToken.deleteMany({ where: { id: matched.id } });
 
   const user = await prisma.user.findUnique({ where: { id: payload.id } });
   const role = payload.role || user?.role;
@@ -64,12 +64,12 @@ export const refreshAccessToken = async (token) => {
 export const logoutUser = async (token) => {
   const payload = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
 
-  const tokens = await prisma.RefreshToken.findMany({
-  where: { 
-    userId: payload.id,
-    expiresAt: { gt: new Date() }  // add this
-  },
-});
+  const tokens = await prisma.refreshToken.findMany({
+    where: {
+      userId: payload.id,
+      expiresAt: { gt: new Date() }
+    },
+  });
 
   const matched = await Promise.all(
     tokens.map(async (t) => {
@@ -79,6 +79,6 @@ export const logoutUser = async (token) => {
   ).then((results) => results.find(Boolean));
 
   if (matched) {
-    await prisma.RefreshToken.delete({ where: { id: matched.id } });
+    await prisma.refreshToken.deleteMany({ where: { id: matched.id } });
   }
 };

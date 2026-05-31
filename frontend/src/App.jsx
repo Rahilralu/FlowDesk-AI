@@ -15,7 +15,6 @@ export default function App() {
     const tryRefresh = async () => {
       try {
        const res = await api.post('/auth/refresh', {}, { withCredentials: true });
-
         setAccessToken(res.data.accessToken);
         setIsAuth(true);
       } catch {

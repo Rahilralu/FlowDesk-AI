@@ -119,8 +119,7 @@ export default function Dashboard() {
   const logout = async () => {
     await api.post('/auth/logout');
     clearAccessToken();
-    onLogout();
-    navigate('/login');
+        navigate('/login');
   };
 
   const statCards = [

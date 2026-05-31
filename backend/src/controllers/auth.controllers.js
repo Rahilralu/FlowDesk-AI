@@ -7,18 +7,14 @@ export const login = async (req, res) => {
     }
     try {
         const { access_token, refresh_token } = await loginUser({ email, password });
+
         res.cookie('refresh_token', refresh_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'none',
+            sameSite: 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
-        res.cookie('csrfToken', 'abc123', {
-            httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'none',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
+
         res.json({ accessToken: access_token });
     } catch (err) {
         res.status(401).json({ error: err.message }); 
@@ -31,11 +27,10 @@ export const refresh = async (req,res) =>{
         return res.status(400).json({ error:"No refresh token"})
     }
     const { access_token,refresh_token } = await refreshAccessToken(token);
-
     res.cookie('refresh_token',refresh_token,{
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite:'none',
+        sameSite:process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000
     })
 
@@ -44,7 +39,13 @@ export const refresh = async (req,res) =>{
 
 export const logout = async (req,res) =>{
     const token = req.cookies?.refresh_token;
-    if(token) await logoutUser(token);
+    if(token) {
+        try {
+            await logoutUser(token);
+        } catch (err) {
+            console.error('Logout error:', err.message || err);
+        }
+    }
 
     res.clearCookie('refresh_token', {
         httpOnly: true,

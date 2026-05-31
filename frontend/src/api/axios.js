@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 const BASE_URL = 'http://localhost:8000/api';
-
 let accessToken = null;
 export const setAccessToken = (token) => { accessToken = token; };
 export const getAccessToken = () => accessToken;
@@ -12,7 +11,6 @@ const api = axios.create({
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
-    'X-CSRF-Token': 'abc123',
   },
 });
 
