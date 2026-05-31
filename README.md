@@ -70,7 +70,7 @@ FlowDesk AI uses a distributed web architecture with separate frontend, backend,
 - Worker: Backend classification worker processes queued requests asynchronously and enriches data with AI classification results.
 - Integrations: Telegram and WhatsApp webhooks ingest external customer messages into the system.
 
-![Architecture Diagram](https://link-to-your-direct-raw-image-file.png)
+![Architecture Diagram](https://res.cloudinary.com/delsqgpxf/image/upload/v1780249418/WhatsApp_Image_2026-05-30_at_12.05.08_PM_avclgr.jpg)
 
 Diagram: https://drive.google.com/file/d/1dH7kJ9T-GUFWrINoIBpIfvskmJS33q6N/view?usp=sharing
 
