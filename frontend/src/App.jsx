@@ -8,7 +8,7 @@ import RequestDetail from './pages/RequestDetail';
 import AuditLog from './pages/AuditLog';
 import api, { setAccessToken, getAccessToken, setCurrentUserId, setCurrentUserRole } from './api/axios';
 
-const BASE_URL = 'http://localhost:8000/api';
+const BASE_URL = import.meta.env.VITE_API_URL
 
 export default function App() {
   const [checking, setChecking] = useState(true);
