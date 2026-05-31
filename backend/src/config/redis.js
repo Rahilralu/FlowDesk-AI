@@ -1,18 +1,17 @@
-import { createClient } from 'redis';
+import { Redis } from 'ioredis';
 
-const client = createClient({
-  url: process.env.REDIS_URL,
-});
+const redisOptions = process.env.NODE_ENV === 'production'
+  ? { tls: {}, maxRetriesPerRequest: null }
+  : { maxRetriesPerRequest: null };
 
-client.on('error', (err) => {
-  console.error('Redis error:', err);
-});
+// for BullMQ
+export const redisConnection = new Redis(process.env.REDIS_URL, redisOptions);
+
+// for pub/sub and general use
+export const createRedisClient = () => new Redis(process.env.REDIS_URL, redisOptions);
 
 export async function connectRedis() {
-  if (!client.isOpen) {
-    await client.connect();
-    console.log('Redis connected');
-  }
+  console.log('Redis connected');
 }
 
-export default client;
+export default redisConnection;

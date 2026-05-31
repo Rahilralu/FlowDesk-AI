@@ -17,7 +17,7 @@ export const ingestRequest = async ({
 }) => {
   const sanitized = sanitizeMessage(message)
 
-  const request = await prisma.customerRequest.create({
+  const request = await prisma.CustomerRequest.create({
     data: {
       message: sanitized,
       customerName,
@@ -27,7 +27,7 @@ export const ingestRequest = async ({
     }
   })
 
-  await prisma.requestEvent.create({
+  await prisma.RequestEvent.create({
     data: {
       requestId: request.id,
       eventType: 'CREATED',

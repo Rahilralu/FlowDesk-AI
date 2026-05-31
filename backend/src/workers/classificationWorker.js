@@ -1,11 +1,14 @@
 import { Worker } from 'bullmq';
-import { createClient } from 'redis';
+import { Redis } from 'ioredis';
 import prisma from '../config/psql.js';
-import { connectRedis } from '../config/redis.js';
+import { redisConnection } from '../config/redis.js';
 import { classifyRequest } from '../services/gemini.services.js';
 
-const publisher = createClient({ url: process.env.REDIS_URL });
-await publisher.connect();
+// publisher uses ioredis too — no manual connect() needed
+const publisher = new Redis(process.env.REDIS_URL, {
+  tls: process.env.NODE_ENV === 'production' ? {} : undefined,
+  maxRetriesPerRequest: null,
+});
 
 const worker = new Worker(
   'requests',
@@ -37,7 +40,7 @@ const worker = new Worker(
       await prisma.aiClassification.create({
         data: {
           requestId,
-          provider: 'gemini',
+          provider: classification.provider || 'anthropic',
           category: classification.category,
           priority: classification.priority,
           summary: classification.summary,
@@ -79,12 +82,14 @@ const worker = new Worker(
       }));
 
     } catch (err) {
+      console.error('Classification error:', err.message);
+
       await prisma.aiClassification.upsert({
         where: { requestId },
         update: { errorState: err.message },
         create: {
           requestId,
-          provider: 'gemini',
+          provider: 'unknown',
           category: 'unknown',
           priority: 'LOW',
           summary: 'Classification failed',
@@ -113,15 +118,15 @@ const worker = new Worker(
         requestId,
         error: err.message,
       }));
-      console.error('Classification error full:', err);
-  // rest of catch...
     }
   },
-  { connection: connectRedis,
-    concurrency: 1, 
-   }
+  {
+    connection: redisConnection,
+    concurrency: 1,
+  }
 );
 
+worker.on('completed', (job) => console.log(`Job ${job.id} completed`));
 worker.on('failed', (job, err) => console.error(`Job ${job.id} failed:`, err.message));
 
 export default worker;

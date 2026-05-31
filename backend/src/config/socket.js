@@ -1,51 +1,40 @@
 import { Server } from 'socket.io';
-import { createClient } from 'redis';
+import { createRedisClient } from '../config/redis.js';
 
 let io;
 
 export const initSocket = async (server) => {
   io = new Server(server, {
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+      origin: ['http://localhost:5173', 'http://localhost:5174', process.env.FRONTEND_URL].filter(Boolean),
       methods: ['GET', 'POST'],
+      credentials: true,
     },
   });
 
-  const subscriber = createClient({ url: process.env.REDIS_URL });
-  await subscriber.connect();
-
-  await subscriber.subscribe('request:classified', (message) => {
-    try {
-      const data = JSON.parse(message);
-      io.emit('request:classified', data);
-    } catch (err) {
-      console.error('Failed to parse classified message', err);
-    }
-  });
-
-  await subscriber.subscribe('request:failed', (message) => {
-    try {
-      const data = JSON.parse(message);
-      io.emit('request:failed', data);
-    } catch (err) {
-      console.error('Failed to parse failed message', err);
-    }
-  });
-
-  await subscriber.subscribe('request:event', (message) => {
-    try {
-      const data = JSON.parse(message);
-      io.emit('request:event', data);
-    } catch (err) {
-      console.error('Failed to parse request event message', err);
-    }
-  });
-
   io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
     socket.on('disconnect', () => {
+      console.log('Client disconnected:', socket.id);
     });
   });
 
+  const subscriber = createRedisClient();
+
+  subscriber.on('message', (channel, message) => {
+    try {
+      const data = JSON.parse(message);
+      if (channel === 'request:classified') io.emit('request:classified', data);
+      if (channel === 'request:failed') io.emit('request:failed', data);
+      if (channel === 'request:event') io.emit('request:event', data);
+    } catch (err) {
+      console.error('Failed to parse Redis message:', err);
+    }
+  });
+
+  await subscriber.subscribe('request:classified', 'request:failed', 'request:event');
+
+  console.log('Socket.io initialized');
   return io;
 };
 
