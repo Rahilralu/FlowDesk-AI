@@ -5,6 +5,7 @@ FlowDesk AI is a customer request management and AI classification platform. It 
 > 🎥 Demo video: [https://youtu.be/K5jCOjCkI-0](https://youtu.be/K5jCOjCkI-0)
 > 
 > 🌐 Live app: [https://flowdesk-ai-4h1.pages.dev/](https://flowdesk-ai-4h1.pages.dev/)
+> 
 > Telegram bot: [https://t.me/Flow_Desk_AI_BOT](https://t.me/Flow_Desk_AI_BOT)
 
 ## Features
