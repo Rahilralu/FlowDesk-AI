@@ -4,9 +4,9 @@ import { createHash } from 'crypto';
 import { publishRequestEvent } from '../utils/eventPublisher.js';
 
 const createRequestEvent = async (data) => {
-  const event = await prisma.requestEvent.create({ data });
-  await publishRequestEvent(event);
-  return event;
+    const event = await prisma.requestEvent.create({ data });
+    await publishRequestEvent(event);
+    return event;
 };
 
 export const createRequest = async (data) => {
@@ -105,12 +105,15 @@ export const getRequestEvents = async (filters) => {
 };
 
 export const getRequestById = async (id) => {
-  const request = await prisma.customerRequest.findUnique({ where: { id },include: { aiClassification: true, requestEvents: { orderBy: { createdAt: 'asc' }, }, internalNotes: { orderBy: { createdAt: 'asc' }}}});
+  const request = await prisma.customerRequest.findUnique({
+    where: { id },
+    include: { aiClassification: true,requestEvents: { orderBy: { createdAt: 'asc' } }, internalNotes: { orderBy: { createdAt: 'asc' },include: { author: { select: { id: true, name: true, email: true } }, }, },},
+  });
   if (!request) throw new Error('Request not found');
   return request;
 };
 
-export const updateRequestStatus = async (id, status) => {
+export const updateRequestStatus = async (id, status , actorId) => {
   const request = await prisma.customerRequest.findUnique({ where: { id } });
   if (!request) throw new Error('Request not found');
   const updated = await prisma.customerRequest.update({ where: { id }, data: { status },});
@@ -119,6 +122,7 @@ export const updateRequestStatus = async (id, status) => {
     eventType: 'STATUS_CHANGED',
     oldValue: request.status,
     newValue: status,
+    actorId,
     metadata: JSON.stringify({ trigger: 'admin_update' }),
   });
   return updated;
@@ -126,21 +130,45 @@ export const updateRequestStatus = async (id, status) => {
 
 // requestService.js
 export const addNote = async (id, body, userId) => {
-  const request = await prisma.customerRequest.findUnique({ where: { id } });
+  const request = await prisma.CustomerRequest.findUnique({ where: { id } });
   if (!request) throw new Error('Request not found');
-  const note = await prisma.internalNote.create({
-    data: {
-      body,
-      requestId: id,
-      authorId: userId,
+
+  const note = await prisma.InternalNote.create({
+    data: { requestId: id, body, authorId: userId },
+    include: {
+      author: { select: { id: true, name: true, email: true } },
     },
   });
-  await createRequestEvent({
-    requestId: id,
-    eventType: 'NOTE_ADDED',
-    newValue: body,
-    actorId: userId,
+
+  await prisma.RequestEvent.create({
+    data: { requestId: id, eventType: 'NOTE_ADDED', newValue: body },
   });
 
   return note;
+};
+
+export const deleteRequest = async (id) => {
+  const request = await prisma.CustomerRequest.findUnique({ where: {id}});
+  if(!request) throw new Error('Request not found');
+  await prisma.CustomerRequest.delete({ where : { id}});
+  return { message: "Deleted successfuly"}
+}
+
+export const deleteNote = async (noteId, userId) => {
+  const note = await prisma.InternalNote.findUnique({ where: { id: noteId } });
+  if (!note) throw new Error('Note not found');
+  if (note.authorId !== userId) throw new Error('Unauthorized');
+  
+  await prisma.InternalNote.delete({ where: { id: noteId } });
+  return { message: 'Note deleted' };
+};
+
+export const getAllEvents = async (limit = 100) => {
+  return prisma.RequestEvent.findMany({
+    take: limit,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      actor: { select: { id: true, name: true, email: true } },
+    },
+  });
 };

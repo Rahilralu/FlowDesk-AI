@@ -43,7 +43,6 @@ export const initSocket = async (server) => {
 
   io.on('connection', (socket) => {
     socket.on('disconnect', () => {
-      // socket disconnected
     });
   });
 

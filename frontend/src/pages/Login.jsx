@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import api, { setAccessToken } from '../api/axios';
 import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
+import api, { setAccessToken, setCurrentUserId } from '../api/axios';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -17,6 +18,8 @@ export default function Login() {
     try {
       const res = await api.post('/auth/login', { email, password });
       setAccessToken(res.data.accessToken);
+      const decoded = jwtDecode(res.data.accessToken);
+      setCurrentUserId(decoded.id);
       navigate('/');
     } catch {
       setError('Invalid credentials. Please try again.');
@@ -63,7 +66,7 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-[#0f1117] border border-gray-700 rounded-lg pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-violet-500 transition-colors"
-                  placeholder="admin@flowdesk.com"
+                  placeholder="flowdesk@gmail.com"
                   required
                 />
               </div>

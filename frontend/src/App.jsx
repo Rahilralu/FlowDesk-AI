@@ -1,11 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode';
+import axios from 'axios';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import RequestDetail from './pages/RequestDetail';
 import AuditLog from './pages/AuditLog';
-import api, { setAccessToken, getAccessToken } from './api/axios';
-import axios from 'axios';
+import api, { setAccessToken, getAccessToken, setCurrentUserId } from './api/axios';
+
+const BASE_URL = 'http://localhost:8000/api';
 
 export default function App() {
   const [checking, setChecking] = useState(true);
@@ -14,8 +17,14 @@ export default function App() {
   useEffect(() => {
     const tryRefresh = async () => {
       try {
-       const res = await api.post('/auth/refresh', {}, { withCredentials: true });
+        const res = await axios.post(
+          `${BASE_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
         setAccessToken(res.data.accessToken);
+        const decoded = jwtDecode(res.data.accessToken);
+        setCurrentUserId(decoded.id);
         setIsAuth(true);
       } catch {
         setIsAuth(false);

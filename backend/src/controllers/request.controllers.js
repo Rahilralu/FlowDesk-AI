@@ -1,5 +1,6 @@
-import { z } from 'zod';
-import { createRequest, getRequests,getRequestById,updateRequestStatus,addNote} from '../services/request.services.js';
+import { createRequest, getRequestEvents,getRequests,getRequestById,updateRequestStatus,addNote, deleteRequest,deleteNote,getAllEvents } from '../services/request.services.js';
+import z from 'zod'
+
 const createRequestSchema = z.object({
     message: z.string().min(1,'Message is required'),
     customerName: z.string().min(1,'Customer name is required'),
@@ -43,13 +44,18 @@ export const handleGetRequestEvents = async (req, res) => {
 };
 
 export const handleUpdateStatus = async (req, res) => {
+  try{
   const { status } = req.body;
-  const allowed = ['NEW', 'QUEUED', 'PROCESSING', 'CLASSIFIED', 'RESOLVED', 'FAILED'];
-  if (!status || !allowed.includes(status)) {
-    return res.status(400).json({ error: 'Invalid status' });
+    const allowed = ['NEW', 'QUEUED', 'PROCESSING', 'CLASSIFIED', 'RESOLVED', 'FAILED'];
+    if (!status || !allowed.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    const request = await updateRequestStatus(req.params.id, status , req.user.id);
+    return res.json({ success: true, request });
   }
-  const request = await updateRequestStatus(req.params.id, status);
-  return res.json({ success: true, request });
+  catch(err){
+    return res.status(500).json({ error: "Update status error"})
+  }
 };
 
 export const handleAddNote = async (req, res) => {
@@ -60,4 +66,36 @@ export const handleAddNote = async (req, res) => {
 
   const note = await addNote(req.params.id, body.trim(), req.user.id);
   return res.json({ success: true, note });
+};
+
+export const handleDeleteRequest = async (req,res) => {
+  try{
+    await deleteRequest(req.params.id);
+    return res.status(200).json({ success: true , message : "Request Deleted"})
+  }
+  catch(err){
+    res.status(404).json({ success: false , message : err.message })
+  }
+}
+
+export const handleDeleteNote = async (req, res) => {
+  try {
+    await deleteNote(req.params.noteId, req.user.id);
+    return res.json({ success: true, message: 'Note deleted' });
+  } catch (err) {
+    return res.status(err.message === 'Unauthorized' ? 403 : 404).json({ 
+      success: false, 
+      message: err.message 
+    });
+  }
+};
+
+export const handleGetEvents = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 100;
+    const events = await getAllEvents(limit);
+    return res.json({ success: true, events });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from '../api/axios';
+import api, { currentUserId } from '../api/axios';
 
 const statusColor = {
   NEW: 'bg-gray-500/10 text-gray-400',
@@ -21,6 +21,8 @@ const timeAgo = (date) => {
   return `${Math.floor(hrs / 24)}d ago`;
 };
 
+const getInitials = (name) => name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?';
+
 export default function RequestDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -30,11 +32,15 @@ export default function RequestDetail() {
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchRequest = async () => {
       try {
         const res = await api.get(`/requests/${id}`);
         setRequest(res.data.request);
@@ -42,7 +48,7 @@ export default function RequestDetail() {
       } catch { navigate('/'); }
       finally { setLoading(false); }
     };
-    fetch();
+    fetchRequest();
   }, [id]);
 
   const updateStatus = async () => {
@@ -51,7 +57,7 @@ export default function RequestDetail() {
       await api.patch(`/requests/${id}/status`, { status: newStatus });
       setRequest((r) => ({ ...r, status: newStatus }));
       showToast('Status updated');
-    } catch { showToast('Failed to update status'); }
+    } catch { showToast('Failed to update status', 'error'); }
     finally { setSaving(false); }
   };
 
@@ -60,11 +66,35 @@ export default function RequestDetail() {
     setSaving(true);
     try {
       const res = await api.post(`/requests/${id}/notes`, { body: note });
-      setRequest((r) => ({ ...r, internalNotes: [...(r.internalNotes || []), res.data.note] }));
+      setRequest((r) => ({
+        ...r,
+        internalNotes: [...(r.internalNotes || []), res.data.note],
+      }));
       setNote('');
       showToast('Note added');
-    } catch { showToast('Failed to add note'); }
+    } catch { showToast('Failed to add note', 'error'); }
     finally { setSaving(false); }
+  };
+
+  const deleteNote = async (noteId) => {
+    try {
+      await api.delete(`/requests/${id}/notes/${noteId}`);
+      setRequest((r) => ({
+        ...r,
+        internalNotes: r.internalNotes.filter((n) => n.id !== noteId),
+      }));
+      showToast('Note deleted');
+    } catch { showToast('Failed to delete note', 'error'); }
+  };
+
+  const deleteRequest = async () => {
+    if (!confirm('Delete this request permanently?')) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/requests/${id}`);
+      navigate('/');
+    } catch { showToast('Failed to delete request', 'error'); }
+    finally { setDeleting(false); }
   };
 
   if (loading) return (
@@ -78,24 +108,40 @@ export default function RequestDetail() {
   return (
     <div className="min-h-screen bg-[#0f1117]">
       {toast && (
-        <div className="fixed top-4 right-4 z-50 bg-violet-600 text-white px-4 py-3 rounded-xl text-sm shadow-lg">
-          {toast}
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl text-sm shadow-lg text-white ${
+          toast.type === 'error' ? 'bg-red-600' : 'bg-violet-600'
+        }`}>
+          {toast.msg}
         </div>
       )}
 
-      <header className="bg-[#1a1d27] border-b border-gray-800 px-6 py-4 flex items-center gap-4 sticky top-0 z-10">
-        <button onClick={() => navigate('/')} className="text-gray-400 hover:text-white transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-        </button>
-        <div>
-          <h1 className="text-white font-semibold">Request Detail</h1>
-          <p className="text-gray-500 text-xs font-mono">{request?.id}</p>
+      <header className="bg-[#1a1d27] border-b border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate('/')} className="text-gray-400 hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-white font-semibold">Request Detail</h1>
+            <p className="text-gray-500 text-xs font-mono">{request?.id}</p>
+          </div>
         </div>
+        <button
+          onClick={deleteRequest}
+          disabled={deleting}
+          className="flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg text-sm transition-colors disabled:opacity-50"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          {deleting ? 'Deleting...' : 'Delete'}
+        </button>
       </header>
 
       <div className="max-w-4xl mx-auto p-6 space-y-6">
+
+        {/* Message */}
         <div className="bg-[#1a1d27] border border-gray-800 rounded-xl p-6">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div className="flex items-center gap-2 flex-wrap">
@@ -116,6 +162,7 @@ export default function RequestDetail() {
           <p className="text-white text-base leading-relaxed">{request?.message}</p>
         </div>
 
+        {/* Customer Info */}
         <div className="bg-[#1a1d27] border border-gray-800 rounded-xl p-6">
           <h2 className="text-white font-medium mb-4 flex items-center gap-2">
             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,6 +178,7 @@ export default function RequestDetail() {
           </div>
         </div>
 
+        {/* AI Classification */}
         {ai && (
           <div className="bg-violet-500/5 border border-violet-500/20 rounded-xl p-6">
             <h2 className="text-violet-400 font-medium mb-4 flex items-center gap-2">
@@ -163,6 +211,7 @@ export default function RequestDetail() {
           </div>
         )}
 
+        {/* Update Status */}
         <div className="bg-[#1a1d27] border border-gray-800 rounded-xl p-6">
           <h2 className="text-white font-medium mb-4">Update Status</h2>
           <div className="flex gap-3">
@@ -185,6 +234,7 @@ export default function RequestDetail() {
           </div>
         </div>
 
+        {/* Event Timeline */}
         {request?.requestEvents?.length > 0 && (
           <div className="bg-[#1a1d27] border border-gray-800 rounded-xl p-6">
             <h2 className="text-white font-medium mb-4">Event Timeline</h2>
@@ -210,19 +260,44 @@ export default function RequestDetail() {
           </div>
         )}
 
+        {/* Internal Notes */}
         <div className="bg-[#1a1d27] border border-gray-800 rounded-xl p-6">
-          <h2 className="text-white font-medium mb-4">Internal Notes</h2>
+          <h2 className="text-white font-medium mb-4 flex items-center justify-between">
+            Internal Notes
+            <span className="text-gray-500 text-xs font-normal">{request?.internalNotes?.length || 0} notes</span>
+          </h2>
+
           {request?.internalNotes?.length === 0 && (
             <p className="text-gray-500 text-sm mb-4">No notes yet.</p>
           )}
+
           <div className="space-y-3 mb-4">
             {request?.internalNotes?.map((n) => (
-              <div key={n.id} className="bg-[#0f1117] rounded-lg p-4 border border-gray-800">
+              <div key={n.id} className="bg-[#0f1117] rounded-lg p-4 border border-gray-800 group">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 bg-violet-600 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    {getInitials(n.author?.name)}
+                  </div>
+                  <span className="text-gray-300 text-xs font-medium">{n.author?.name || 'Unknown'}</span>
+                  <span className="text-gray-600 text-xs">{n.author?.email}</span>
+                  <span className="text-gray-600 text-xs ml-auto">{timeAgo(n.createdAt)}</span>
+                  {n.author?.id === currentUserId && (
+                    <button
+                      onClick={() => deleteNote(n.id)}
+                      className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 transition-all ml-1"
+                      title="Delete note"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
                 <p className="text-gray-200 text-sm leading-relaxed">{n.body}</p>
-                <p className="text-gray-600 text-xs mt-2">{timeAgo(n.createdAt)}</p>
               </div>
             ))}
           </div>
+
           <div className="flex gap-3">
             <textarea
               value={note}

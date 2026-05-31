@@ -121,6 +121,11 @@ export default function Dashboard() {
     clearAccessToken();
         navigate('/login');
   };
+  const setPage = (newPage) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('page', String(newPage));
+    setSearchParams(next);
+  };
 
   const statCards = [
     { label: 'Total Requests', value: stats.total, color: 'violet' },
@@ -172,6 +177,7 @@ export default function Dashboard() {
                 if (item.label === 'All Requests') setFilter('status', '');
                 else if (item.label === 'High Priority') setFilter('priority', 'HIGH');
                 else if (item.label === 'Failed') setFilter('status', 'FAILED');
+                else if (item.label === 'Audit Log') navigate('/audit-log');
               }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${item.active ? 'bg-violet-600/20 text-violet-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
             >
@@ -330,7 +336,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-center gap-2">
               <button
                 disabled={page === 1}
-                onClick={() => setFilter('page', String(page - 1))}
+                onClick={() => setPage(page - 1)}
                 className="px-3 py-2 text-sm text-gray-400 hover:text-white disabled:opacity-30 border border-gray-700 rounded-lg hover:border-gray-500 transition-colors"
               >
                 ← Prev
@@ -338,7 +344,7 @@ export default function Dashboard() {
               <span className="text-gray-400 text-sm">Page {page} of {totalPages}</span>
               <button
                 disabled={page === totalPages}
-                onClick={() => setFilter('page', String(page + 1))}
+                onClick={() => setPage(page + 1)}
                 className="px-3 py-2 text-sm text-gray-400 hover:text-white disabled:opacity-30 border border-gray-700 rounded-lg hover:border-gray-500 transition-colors"
               >
                 Next →

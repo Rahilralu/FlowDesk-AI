@@ -1,17 +1,19 @@
 import axios from 'axios';
 
 const BASE_URL = 'http://localhost:8000/api';
+
 let accessToken = null;
+export let currentUserId = null;
+
 export const setAccessToken = (token) => { accessToken = token; };
 export const getAccessToken = () => accessToken;
 export const clearAccessToken = () => { accessToken = null; };
+export const setCurrentUserId = (id) => { currentUserId = id; };
 
 const api = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
 api.interceptors.request.use((config) => {

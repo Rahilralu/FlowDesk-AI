@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import { useSocket } from '../hooks/useSocket';
 
 const formatEventLabel = (eventType) => eventType.replace(/_/g, ' ');
 
 export default function AuditLog() {
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,12 +25,6 @@ export default function AuditLog() {
     fetchEvents();
   }, [fetchEvents]);
 
-  const handleRequestEvent = useCallback((eventData) => {
-    setEvents((prev) => [eventData, ...prev].slice(0, 100));
-  }, []);
-
-  useSocket(undefined, undefined, handleRequestEvent);
-
   return (
     <div className="min-h-screen bg-[#0f1117] flex">
       <main className="flex-1 overflow-auto">
@@ -37,8 +32,14 @@ export default function AuditLog() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-white font-semibold text-2xl">Audit Log</h1>
-              <p className="text-gray-400 text-sm">Live timeline of request events and system actions.</p>
+              <p className="text-gray-400 text-sm">Timeline of request events and system actions.</p>
             </div>
+            <button
+              onClick={() => navigate('/')}
+              className="inline-flex items-center rounded-lg border border-gray-700 bg-[#11141d] px-4 py-2 text-sm font-medium text-gray-200 hover:bg-gray-800 transition-colors"
+            >
+              ← Back to Dashboard
+            </button>
           </div>
         </header>
 
@@ -47,9 +48,12 @@ export default function AuditLog() {
             <div className="flex items-center justify-between gap-4 mb-6">
               <div>
                 <h2 className="text-white font-semibold text-lg">Recent events</h2>
-                <p className="text-gray-500 text-sm">Automatically updates when request activity occurs.</p>
+                <p className="text-gray-500 text-sm">{events.length} events loaded</p>
               </div>
-              <button onClick={fetchEvents} className="text-sm text-violet-400 hover:text-white transition-colors">
+              <button
+                onClick={fetchEvents}
+                className="text-sm text-violet-400 hover:text-white transition-colors"
+              >
                 Refresh
               </button>
             </div>
