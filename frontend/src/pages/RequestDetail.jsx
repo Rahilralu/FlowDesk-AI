@@ -34,6 +34,8 @@ export default function RequestDetail() {
   const [toast, setToast] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
+  const isAdmin = currentUserRole === 'ADMIN';
+
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
@@ -133,14 +135,21 @@ export default function RequestDetail() {
   };
 
   if (loading) return (
+    <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
+  const ai = request?.aiClassification;
+
+  return (
     <div className="min-h-screen bg-[#09090b] relative overflow-hidden">
-      {/* Background glow */}
       <div className="fixed top-0 right-0 w-[60%] h-[50%] bg-violet-600/10 rounded-full blur-[150px] mix-blend-screen pointer-events-none" />
 
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgba(0,0,0,0.4)] border flex items-center gap-3 fade-in ${
-          toast.type === 'error' 
-            ? 'bg-red-500/10 text-red-400 border-red-500/20 backdrop-blur-md' 
+          toast.type === 'error'
+            ? 'bg-red-500/10 text-red-400 border-red-500/20 backdrop-blur-md'
             : 'bg-violet-500/10 text-violet-400 border-violet-500/20 backdrop-blur-md'
         }`}>
           {toast.type === 'error' ? (
@@ -237,9 +246,7 @@ export default function RequestDetail() {
               </div>
               <div className="bg-black/20 rounded-xl p-4 border border-white/5">
                 <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Source</p>
-                <p className="text-white font-medium capitalize flex items-center gap-2">
-                  {request?.source}
-                </p>
+                <p className="text-white font-medium capitalize flex items-center gap-2">{request?.source}</p>
               </div>
               {request?.customerEmail && (
                 <div className="bg-black/20 rounded-xl p-4 border border-white/5 col-span-2">
@@ -266,7 +273,7 @@ export default function RequestDetail() {
                 </div>
                 <h2 className="text-violet-300 font-semibold text-lg">AI Intelligence</h2>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4 mb-6 relative z-10">
                 <div className="bg-black/40 rounded-xl p-4 border border-white/5">
                   <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Predicted Category</p>
@@ -277,9 +284,7 @@ export default function RequestDetail() {
                   <div className="flex items-center gap-3">
                     <span className="text-white font-bold">{Math.round(ai.confidence * 100)}%</span>
                     <div className="flex-1 h-1.5 bg-black/50 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full relative" style={{ width: `${ai.confidence * 100}%` }}>
-                        <div className="absolute inset-0 bg-white/20 w-full animate-[shimmer_2s_infinite]" />
-                      </div>
+                      <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full" style={{ width: `${ai.confidence * 100}%` }} />
                     </div>
                   </div>
                 </div>
@@ -287,26 +292,20 @@ export default function RequestDetail() {
 
               <div className="space-y-4 relative z-10">
                 <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
-                    Summary
-                  </p>
+                  <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-2">Summary</p>
                   <p className="text-gray-300 text-sm leading-relaxed">{ai.summary}</p>
                 </div>
                 <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                  <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    Reasoning
-                  </p>
+                  <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-2">Reasoning</p>
                   <p className="text-gray-300 text-sm leading-relaxed">{ai.reason}</p>
                 </div>
               </div>
             </div>
           ) : (
-             <div className="glass-card rounded-3xl p-8 fade-in flex flex-col items-center justify-center text-center opacity-50" style={{ animationDelay: '150ms' }}>
-                <svg className="w-12 h-12 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-                <p className="text-white font-medium">No AI classification available</p>
-             </div>
+            <div className="glass-card rounded-3xl p-8 fade-in flex flex-col items-center justify-center text-center opacity-50" style={{ animationDelay: '150ms' }}>
+              <svg className="w-12 h-12 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+              <p className="text-white font-medium">No AI classification available</p>
+            </div>
           )}
         </div>
 
@@ -370,7 +369,6 @@ export default function RequestDetail() {
                         <p className="text-gray-200 text-sm font-medium">{n.author?.name || 'Unknown'}</p>
                         <p className="text-gray-500 text-[10px] font-mono">{timeAgo(n.createdAt)}</p>
                       </div>
-                      
                       {isAdmin && n.author?.id === currentUserId && (
                         <button
                           onClick={() => deleteNote(n.id)}
@@ -413,23 +411,20 @@ export default function RequestDetail() {
               <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               Audit Trail
             </h2>
-            
+
             {request?.requestEvents?.length > 0 ? (
               <div className="space-y-6 relative before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-white/10 before:to-transparent">
-                {request.requestEvents.map((e, i) => (
+                {request.requestEvents.map((e) => (
                   <div key={e.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
                     <div className="flex items-center justify-center w-6 h-6 rounded-full border-4 border-[#12141c] bg-violet-500 text-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-lg z-10">
                       <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                     </div>
-                    
                     <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-2xl bg-black/20 border border-white/5 group-hover:border-white/10 transition-colors">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-gray-200 text-xs font-bold uppercase tracking-wider">{e.eventType.replace(/_/g, ' ')}</span>
-                      </div>
+                      <span className="text-gray-200 text-xs font-bold uppercase tracking-wider">{e.eventType.replace(/_/g, ' ')}</span>
                       {(e.oldValue || e.newValue) && (
                         <div className="flex items-center gap-2 mt-2 bg-black/40 p-2 rounded-lg border border-white/5">
                           {e.oldValue && <span className="text-gray-500 text-[10px] font-mono truncate max-w-[40%]">{e.oldValue}</span>}
-                          {e.oldValue && <svg className="w-3 h-3 text-gray-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>}
+                          {e.oldValue && <svg className="w-3 h-3 text-gray-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>}
                           <span className="text-violet-400 text-[10px] font-mono font-medium truncate">{e.newValue}</span>
                         </div>
                       )}
