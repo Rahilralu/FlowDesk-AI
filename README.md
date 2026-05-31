@@ -1,69 +1,97 @@
 # FlowDesk AI
 
-FlowDesk AI is a customer request management and AI classification platform. It unifies inbound requests from web and messaging channels, stores them in PostgreSQL, processes them through an AI worker, and displays them in a secure admin dashboard with live updates.
+FlowDesk AI is a customer request management and AI classification platform. It collects customer messages from web and messaging channels, stores them in PostgreSQL, processes them with an AI worker, and exposes a secure dashboard for tracking requests, status updates, audit history, and internal notes.
 
-> Live demo: https://flowdesk-ai-4h1.pages.dev
+> 🎥 Demo video: [https://youtu.be/K5jCOjCkI-0](https://youtu.be/K5jCOjCkI-0)
+> 
+> 🌐 Live app: [https://flowdesk-ai-4h1.pages.dev/](https://flowdesk-ai-4h1.pages.dev/)
 
-## Key features
+## Features
 
-- Authentication with JWT access and refresh token flow
-- Protected admin dashboard with role-based access controls
-- Request ingestion via API, Telegram, and WhatsApp webhooks
-- AI-powered request classification worker
-- Redis-backed queue processing using BullMQ
-- PostgreSQL data storage via Prisma ORM
+- JWT authentication with access and refresh tokens
+- Admin and agent role-based access control
+- Request ingestion via REST API, Telegram webhook, and WhatsApp webhook
+- AI request classification using Gemini
+- Redis-backed BullMQ queue for async processing
 - Real-time updates with Socket.IO
-- Audit log and request history tracking
+- Request audit trail and internal notes
+- PostgreSQL storage via Prisma ORM
 
-## Project structure
+## Tech Stack
 
-```
+- Frontend: React, Vite, Tailwind CSS, Socket.IO client
+- Backend: Node.js, Express, Prisma ORM, BullMQ, Socket.IO
+- Database: PostgreSQL
+- Cache / Queue: Upstash Redis
+- AI integration: Gemini / Google Generative AI SDK
+- Auth & security: JWT, refresh tokens, role-based access
+- Hosting: Cloudflare Pages (frontend), Render (backend), Render DB, Upstash Redis
+- Messaging integrations: Telegram webhook, WhatsApp webhook
+
+## Repository structure
+
+```text
 backend/
-  index.js                 # Express server entry point
+  Dockerfile
+  index.js
+  package.json
+  prisma/
   src/
-    config/               # DB, Redis, socket setup
-    controllers/          # API and webhook handlers
-    middleware/           # auth, role checks, rate limiting
-    services/             # business logic and AI integrations
-    workers/              # classification job worker
-    routes/               # routing definitions
-    webhooks/             # webhook receiver logic
-  prisma/                  # schema and migrations
-
+    config/
+    controllers/
+    middleware/
+    queues/
+    routes/
+    services/
+    utils/
+    webhooks/
+    workers/
 frontend/
-  src/                     # React application source
-    api/                   # Axios setup and token refresh handling
-    hooks/                 # custom hooks like useSocket
-    pages/                 # dashboard, login, request details, audit log
+  Dockerfile
+  package.json
+  src/
+    api/
+    hooks/
+    pages/
+    App.jsx
+    main.jsx
+docker-compose.yml
+README.md
 ```
 
-## API overview
+## Architecture
 
-### Authentication
-- `POST /api/auth/login` — authenticate user and receive access token
-- `POST /api/auth/refresh` — refresh access token using HTTP-only cookie
-- `POST /api/auth/logout` — revoke session and logout user
+FlowDesk AI uses a distributed web architecture with separate frontend, backend, storage, and worker components.
 
-### Requests
-- `POST /api/requests` — create a new customer request
-- `GET /api/requests` — list requests (protected)
-- `GET /api/requests/:id` — fetch a request by ID (protected)
-- `PATCH /api/requests/:id/status` — update request status (protected)
-- `POST /api/requests/:id/notes` — add an internal note (protected)
-- `GET /api/requests/events` — fetch request audit events (protected)
+- Frontend: Cloudflare Pages deployment serves the React/Vite UI.
+- Backend API: Render-hosted Express server handles authentication, request CRUD, webhooks, and Socket.IO events.
+- Database: Render managed PostgreSQL stores users, requests, events, and notes.
+- Queue & cache: Upstash Redis powers BullMQ job queueing, caching, and worker coordination.
+- Worker: Backend classification worker processes queued requests asynchronously and enriches data with AI classification results.
+- Integrations: Telegram and WhatsApp webhooks ingest external customer messages into the system.
 
-### Webhooks
-- `POST /webhooks/telegram` — ingest incoming Telegram messages
-- `POST /webhooks/whatsapp` — ingest incoming WhatsApp messages
+![Architecture Diagram](https://link-to-your-direct-raw-image-file.png)
 
-## Getting started
+Diagram: https://drive.google.com/file/d/1dH7kJ9T-GUFWrINoIBpIfvskmJS33q6N/view?usp=sharing
+
+## Challenges Solved
+
+- Built a secure role-based request management system for admins and agents.
+- Implemented asynchronous AI classification with BullMQ and Redis to keep the API responsive.
+- Integrated webhook ingestion for Telegram and WhatsApp with request normalization.
+- Added real-time updates through Socket.IO so dashboard data stays live.
+- Handled session refresh and secure token management across frontend/backend boundaries.
+- Designed the system to run locally with Docker or in production using Render, Cloudflare Pages, and Upstash.
+
+## Quick start
 
 ### Prerequisites
 
-- Node.js 20+ or later
+- Node.js 20+
+- npm
 - PostgreSQL
 - Redis
-- npm
+- Docker (optional, for containerized local development)
 
 ### Install dependencies
 
@@ -74,88 +102,162 @@ cd ../frontend
 npm install
 ```
 
-### Configure environment
+### Local development
 
-Copy `backend/.env.example` or create `backend/.env` with values similar to:
-
-```env
-PORT=8000
-DATABASE_URL=postgresql://postgres:password@localhost:5432/flow_desk_ai
-REDIS_URL=redis://localhost:6379
-ACCESS_TOKEN_SECRET=your_access_secret
-REFRESH_TOKEN_SECRET=your_refresh_secret
-TELEGRAM_WEBHOOK_SECRET=your_telegram_secret
-BACKEND_URL=http://localhost:8000
-FRONTEND_URL=http://localhost:5173
-```
-
-Add provider credentials if your deployment requires them:
-
-```env
-GEMINI_API_KEY=your_gemini_api_key
-```
-
-### Database setup
+1. Configure backend environment in `backend/.env`
+2. Generate Prisma client, migrate the database, and verify the schema
 
 ```bash
 cd backend
 npx prisma generate
 npx prisma migrate dev --name init
+npx prisma db pull
 ```
 
-### Run locally
+3. Confirm the database schema and connection by opening Prisma Studio:
 
 ```bash
+npx prisma studio
+```
+
+4. Start backend and frontend in separate terminals
+
+```bash
+# Terminal 1
 cd backend
 npm run dev
-```
 
-Open a new terminal:
-
-```bash
+# Terminal 2
 cd frontend
 npm run dev
 ```
 
-### Worker process
+### Docker Compose
 
-The classification worker runs separately:
+To boot the full stack using Docker Compose:
+
+```bash
+docker-compose up --build
+```
+
+This starts:
+- PostgreSQL on `localhost:5433`
+- Redis on `localhost:6379`
+- Backend on `http://localhost:8000`
+- Frontend on `http://localhost`
+
+### Docker image publishing
+
+Build and push your container images with:
+
+```bash
+docker push rahilralu/flowdesk-ai-frontend:tagname
+docker push rahilralu/flowdesk-ai-backend:tagname
+```
+
+Replace `tagname` with your release tag.
+
+## Environment variables
+
+Create `backend/.env` with safe values and do not commit secrets.
+
+Required variables:
+
+```env
+PORT=8000
+DATABASE_URL=postgresql://user:password@localhost:5433/flow_desk_ai
+REDIS_URL=redis://localhost:6379
+ACCESS_TOKEN_SECRET=your_access_token_secret
+REFRESH_TOKEN_SECRET=your_refresh_token_secret
+BACKEND_URL=http://localhost:8000
+FRONTEND_URL=http://localhost:5173
+TELEGRAM_WEBHOOK_SECRET=your_telegram_webhook_secret
+```
+
+Optional variables for integrations:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_WHATSAPP_NUMBER=whatsapp:+1234567890
+ADMIN_EMAIL=admin@example.com
+```
+
+## Backend API overview
+
+### Authentication
+- `POST /api/auth/login` — sign in and receive access token
+- `POST /api/auth/refresh` — refresh access token using a secure cookie
+- `POST /api/auth/logout` — log out and revoke refresh token
+
+### Requests
+- `POST /api/requests` — create a new customer request
+- `GET /api/requests` — list requests
+- `GET /api/requests/:id` — fetch request details
+- `PATCH /api/requests/:id/status` — update request status
+- `POST /api/requests/:id/notes` — add an internal note
+- `DELETE /api/requests/:id/notes/:noteId` — delete an internal note
+- `DELETE /api/requests/:id` — delete a request
+
+### Webhooks
+- `POST /webhooks/telegram` — ingest Telegram messages
+- `POST /webhooks/whatsapp` — ingest WhatsApp messages
+
+## Running the worker
+
+The AI classification worker processes queued requests separately from the API server.
 
 ```bash
 cd backend
 npm run worker
 ```
 
-## Available scripts
+## Deployment
+
+This project is deployed using:
+
+- Backend: Render
+- PostgreSQL: Render managed database
+- Redis: Upstash
+- Frontend: Cloudflare Pages
+
+Recommended production process:
+
+1. Deploy backend to Render and connect it to Render PostgreSQL.
+2. Configure Upstash Redis and set `REDIS_URL`.
+3. Deploy frontend to Cloudflare Pages and point it to the Render backend URL.
+4. Use secure production secrets for `ACCESS_TOKEN_SECRET`, `REFRESH_TOKEN_SECRET`, and webhook tokens.
+
+## Scripts
 
 ### Backend
-- `npm run dev` — start the backend server with nodemon
-- `npm start` — run the backend server in production mode
-- `npm run worker` — start the AI classification worker
+- `npm run dev` — development server with nodemon
+- `npm start` — production server
+- `npm run worker` — start request classification worker
 
 ### Frontend
-- `npm run dev` — start the React app
+- `npm run dev` — start Vite development server
 - `npm run build` — build production assets
 - `npm run preview` — preview the production build
 - `npm run lint` — run ESLint
 
-## Deployment
-
-- Ensure `BACKEND_URL` is configured for the deployed frontend
-- Use secure values for `ACCESS_TOKEN_SECRET` and `REFRESH_TOKEN_SECRET`
-- Run Redis and PostgreSQL in the target environment
-- Deploy backend, then frontend, and run the worker process
-- Configure webhook endpoints to use the deployed backend URL and secret token
-
 ## Notes
 
-- The frontend is built with React, Vite, Tailwind CSS, and Socket.IO client
-- The backend is built with Express, Prisma, BullMQ, Redis, and Socket.IO
-- Request events are logged and surfaced in the audit log
-- Refresh token handling is implemented via HTTP-only secure cookies
+- Backend uses Express, Socket.IO, Prisma, BullMQ, Redis, and Twilio/Telegram integrations.
+- Frontend uses React, Vite, Tailwind CSS, and Socket.IO client.
+- The worker processes classification jobs separately from the API server.
+- Webhooks are supported for Telegram and WhatsApp ingestion.
 
-## Live demo
+## Demo video
 
-Visit the deployed frontend at:
+Watch the project overview and walkthrough:
 
-https://flowdesk-ai-4h1.pages.dev
+https://youtu.be/K5jCOjCkI-0
+
+## License
+
+This project is released under the MIT License.
+
+See the `LICENSE` file for full terms.
