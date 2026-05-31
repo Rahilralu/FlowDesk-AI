@@ -1,11 +1,12 @@
 import { Redis } from 'ioredis';
 
 const getRedisOptions = () => {
-  const isProduction = process.env.NODE_ENV === 'production';
+  const redisUrl = process.env.REDIS_URL || '';
+  const isExternalRedis = redisUrl.startsWith('rediss://') || redisUrl.includes('render.com');
   return {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
-    tls: isProduction ? { rejectUnauthorized: false } : undefined,
+    tls: isExternalRedis ? { rejectUnauthorized: false } : undefined,
   };
 };
 

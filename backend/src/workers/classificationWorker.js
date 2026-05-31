@@ -4,9 +4,8 @@ import prisma from '../config/psql.js';
 import { redisConnection } from '../config/redis.js';
 import { classifyRequest } from '../services/gemini.services.js';
 
-// publisher uses ioredis too — no manual connect() needed
 const publisher = new Redis(process.env.REDIS_URL, {
-  tls: process.env.NODE_ENV === 'production' ? {} : undefined,
+  tls: process.env.REDIS_URL?.startsWith('rediss://') ? { rejectUnauthorized: false } : undefined,
   maxRetriesPerRequest: null,
 });
 
