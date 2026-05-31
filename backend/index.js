@@ -8,7 +8,7 @@ import { connectRedis } from "./src/config/redis.js";
 import http from 'http';
 import { initSocket } from './src/config/socket.js';
 import './src/workers/classificationWorker.js';
-// import { globalLimiter } from "./src/middleware/rateLimiter.js";
+import { globalLimiter } from "./src/middleware/rateLimiter.js";
 import telegramWebhook from './src/webhooks/telegram.webhook.js'
 
 dotenv.config();
