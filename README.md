@@ -5,6 +5,7 @@ FlowDesk AI is a customer request management and AI classification platform. It 
 > 🎥 Demo video: [https://youtu.be/K5jCOjCkI-0](https://youtu.be/K5jCOjCkI-0)
 > 
 > 🌐 Live app: [https://flowdesk-ai-4h1.pages.dev/](https://flowdesk-ai-4h1.pages.dev/)
+> Telegram bot: [https://t.me/Flow_Desk_AI_BOT](https://t.me/Flow_Desk_AI_BOT)
 
 ## Features
 
@@ -68,7 +69,7 @@ FlowDesk AI uses a distributed web architecture with separate frontend, backend,
 - Database: Render managed PostgreSQL stores users, requests, events, and notes.
 - Queue & cache: Upstash Redis powers BullMQ job queueing, caching, and worker coordination.
 - Worker: Backend classification worker processes queued requests asynchronously and enriches data with AI classification results.
-- Integrations: Telegram and WhatsApp webhooks ingest external customer messages into the system.
+- Integrations: Telegram and WhatsApp webhooks ingest external customer messages into the system. The Telegram webhook is powered by the bot at [https://t.me/Flow_Desk_AI_BOT](https://t.me/Flow_Desk_AI_BOT).
 
 ![Architecture Diagram](https://res.cloudinary.com/delsqgpxf/image/upload/v1780249418/WhatsApp_Image_2026-05-30_at_12.05.08_PM_avclgr.jpg)
 
